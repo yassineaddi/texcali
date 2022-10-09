@@ -116,6 +116,7 @@ def create_ticket_dependencies(tickets: typing.List[excalidraw.Ticket]) -> None:
             checklist = trello_client.create_checklist_on_card(
                 ticket.card_id,
                 trello_cfg.get("prerequisites_checklist_title", "Pre-requisite Cards"),
+                "bottom"
             )
             checklist_id = checklist.get("id")
             for inner_ticket in ticket.depends_on:
@@ -127,6 +128,7 @@ def create_ticket_dependencies(tickets: typing.List[excalidraw.Ticket]) -> None:
             checklist = trello_client.create_checklist_on_card(
                 ticket.card_id,
                 trello_cfg.get("dependents_checklist_title", "Dependent Cards"),
+                "bottom"
             )
             checklist_id = checklist.get("id")
             for inner_ticket in ticket.dependents:
