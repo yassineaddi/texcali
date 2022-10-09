@@ -1,0 +1,6 @@
+[trello]
+api_key = "your_api_key"
+token = "your_token"
+ac_checklist_title = "Acceptance Criteria"
+prerequisites_checklist_title = "Pre-requisite Cards"
+dependents_checklist_title = "Dependent Cards"
