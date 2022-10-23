@@ -45,3 +45,18 @@ def create_checkitem_on_checklist(checklist_id: str, checkitem_name: str):
         f"{base_url}/checklists/{checklist_id}/checkItems", headers=headers, params=q
     )
     return response.json()
+
+
+def get_board_labels(board_id: str) -> typing.List[typing.Dict]:
+    response = requests.get(
+        f"{base_url}/boards/{board_id}/labels", headers=headers, params=query
+    )
+    return response.json()
+
+
+def add_label_to_card(card_id: str, label_id: str) -> typing.Dict:
+    q = {**query, "value": label_id}
+    response = requests.post(
+        f"{base_url}/cards/{card_id}/idLabels", headers=headers, params=q
+    )
+    return response.json()

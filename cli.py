@@ -67,6 +67,22 @@ def select_board_list(board_id: str) -> typing.Dict:
     return board_lists[menu_entry_index]
 
 
+def select_labels(board_id: str) -> typing.List[typing.Dict]:
+    board_labels = trello_client.get_board_labels(board_id)
+    terminal_menu = TerminalMenu(
+        map(lambda board_label: board_label["name"], board_labels),
+        title="Labels (press Esc or q to skip this step)",
+        show_search_hint=True,
+        skip_empty_entries=True,
+        multi_select=True,
+        show_multi_select_hint=True,
+    )
+    menu_entry_indexes = terminal_menu.show()
+    if not menu_entry_indexes:
+        return []
+    return [board_labels[menu_entry_index] for menu_entry_index in menu_entry_indexes]
+
+
 def print_tickets(tickets: typing.List[excalidraw.Ticket]) -> None:
     print(
         "\n"
@@ -104,7 +120,6 @@ def create_tickets(board_list_id: str, tickets: typing.List[excalidraw.Ticket]) 
             trello_client.create_checkitem_on_checklist(checklist.get("id"), item)
         if index != len(tickets) - 1:
             sleep(1)
-    print("")
 
 
 def create_ticket_dependencies(tickets: typing.List[excalidraw.Ticket]) -> None:
@@ -116,7 +131,7 @@ def create_ticket_dependencies(tickets: typing.List[excalidraw.Ticket]) -> None:
             checklist = trello_client.create_checklist_on_card(
                 ticket.card_id,
                 trello_cfg.get("prerequisites_checklist_title", "Pre-requisite Cards"),
-                "bottom"
+                "bottom",
             )
             checklist_id = checklist.get("id")
             for inner_ticket in ticket.depends_on:
@@ -128,9 +143,11 @@ def create_ticket_dependencies(tickets: typing.List[excalidraw.Ticket]) -> None:
             checklist = trello_client.create_checklist_on_card(
                 ticket.card_id,
                 trello_cfg.get("dependents_checklist_title", "Dependent Cards"),
-                "bottom"
+                "bottom",
             )
             checklist_id = checklist.get("id")
+            # TODO: leverage batch requests
+            # https://developer.atlassian.com/cloud/trello/rest/api-group-batch/#api-batch-get
             for inner_ticket in ticket.dependents:
                 sleep(0.5)
                 trello_client.create_checkitem_on_checklist(
@@ -138,7 +155,16 @@ def create_ticket_dependencies(tickets: typing.List[excalidraw.Ticket]) -> None:
                 )
         if index != len(tickets) - 1:
             sleep(1)
-    print(emoji.emojize(":zap: Created dependencies!", language="alias"), end="\n\n")
+    print(emoji.emojize(":zap: Created dependencies", language="alias"))
+
+
+def add_labels_to_tickets(tickets: typing.List[excalidraw.Ticket], labels: typing.List[typing.Dict]) -> None:
+    print(stylize(f"Adding labels...", colored.fg("light_gray")), end="\r")
+    for index, ticket in enumerate(tickets):
+        for label in labels:
+            trello_client.add_label_to_card(ticket.card_id, label.get("id"))
+            sleep(0.5)
+    print(emoji.emojize(":label: Added labels", language="alias"))
 
 
 def main(
@@ -150,12 +176,18 @@ def main(
     selected_board = select_board()
     print(stylize(selected_board.get("name"), colored.fg("light_gray")))
     selected_board_list = select_board_list(selected_board.get("id"))
+    print(stylize(selected_board_list.get("name"), colored.fg("light_gray")))
+    selected_labels = select_labels(selected_board.get("id"))
     print(
-        stylize(selected_board_list.get("name"), colored.fg("light_gray")), end="\n\n"
+        stylize(
+            ", ".join(selected_label.get("name") for selected_label in selected_labels),
+            colored.fg("light_gray"),
+        )
     )
     create_tickets(selected_board_list.get("id"), tickets)
     if not ignore_deps:
         create_ticket_dependencies(tickets)
+    add_labels_to_tickets(tickets, selected_labels)
 
 
 if __name__ == "__main__":

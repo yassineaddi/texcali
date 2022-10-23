@@ -11,6 +11,6 @@
 #### Roadmap
 - [x] Add dependencies as checklists
 - [x] Express AC as checklists
-- [ ] Add epic label
+- [x] Add epic label
 - [ ] Edit tickets
 - [ ] Attach images
